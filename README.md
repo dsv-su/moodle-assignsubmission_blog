@@ -8,12 +8,13 @@ This is a assignment submission type for Moodle[1]. It lets students hand in sub
 This submission type requires Moodle >= 2.3. To work it also requires triggered events when blog entries are added, edited or removed. This is not a part of Moodle yet, and will need to be added manually for the time beeing.
 
 ## Installation
-	First; clone the submission type into the correct directory.
+### Step 1: Clone the submission type
 	
 	$ cd \[moodle installation\]/mod/assign/submission/
 	$ git clone git://github.com/eriklundberg/BlogAssignment.git
-	
-	Then; go to Home > Site administration > Notifications to install the submission typ into Moodle.
+
+### Step 2: Install into Moodle	
+	As an administrator; go to Home > Site administration > Notifications to install the submission type.
 
 ## Licence
 
