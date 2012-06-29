@@ -14,7 +14,7 @@ This submission type requires Moodle >= 2.3. To work it also requires triggered 
 	$ git clone git://github.com/eriklundberg/BlogAssignment.git
 
 ### Step 2: Install into Moodle	
-	As an administrator; go to Home > Site administration > Notifications to install the submission type.
+As an administrator; go to Home > Site administration > Notifications to install the submission type.
 
 ## Licence
 
