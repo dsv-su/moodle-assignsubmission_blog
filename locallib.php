@@ -44,4 +44,16 @@ class assign_submission_blog extends assign_submission_plugin {
 		$this->set_config('required_comments', $data->assignsubmission_blog_required_comments);
 		return true;
 	}
+	
+	public function view_summary(stdClass $submission, & $showviewlink) {
+		global $DB;
+		
+		$showviewlink = false;
+		
+		$entries = $DB->count_records_sql('SELECT COUNT(ba.id) FROM {blog_association} ba JOIN {post} p ON ba.blogid = p.id'
+				.' WHERE ba.contextid = ? AND p.userid = ?', 
+				array($this->assignment->get_context()->id, $submission->userid));
+				
+		return get_string('num_entries', 'assignsubmission_blog', $entries);
+	}
 }
