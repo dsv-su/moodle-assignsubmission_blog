@@ -48,12 +48,28 @@ class assign_submission_blog extends assign_submission_plugin {
 	public function view_summary(stdClass $submission, & $showviewlink) {
 		global $DB;
 		
-		$showviewlink = false;
+		$showviewlink = true;
 		
 		$entries = $DB->count_records_sql('SELECT COUNT(ba.id) FROM {blog_association} ba JOIN {post} p ON ba.blogid = p.id'
 				.' WHERE ba.contextid = ? AND p.userid = ?', 
 				array($this->assignment->get_context()->id, $submission->userid));
 				
 		return get_string('num_entries', 'assignsubmission_blog', $entries);
+	}
+	
+	public function view(stdClass $submission) {
+		global $CFG;
+		
+		require_once('../../blog/locallib.php');
+		$bloglisting = new blog_listing(array('user' => $submission->userid, 
+				'module' => $this->assignment->get_course_module()->id));
+
+		ob_start();
+		foreach ($bloglisting->get_entries() as $entry) {
+			$blogentry = new blog_entry(null, $entry);
+			$blogentry->print_html();
+		}
+		
+		return ob_get_clean();		
 	}
 }
