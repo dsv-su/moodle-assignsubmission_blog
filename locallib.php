@@ -72,4 +72,21 @@ class assign_submission_blog extends assign_submission_plugin {
 		
 		return ob_get_clean();		
 	}
+	
+	public function get_form_elements($submission, MoodleQuickForm $mform, stdClass $data) {
+		global $CFG;
+		
+		$addnewentryurl = $CFG->wwwroot . '/blog/edit.php?action=add&modid='
+				. $this->assignment->get_course_module()->id;
+		
+		if ($submission) {
+			$mform->addElement('html', html_writer::tag('a', get_string('addnewentry', 'blog'), 
+					array('href' => $addnewentryurl)));
+			$mform->addElement('html', $this->view($submission));
+		} 
+		else {
+			redirect($addnewentryurl);
+		}
+		return true;
+	}
 }
