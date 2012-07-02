@@ -1,5 +1,12 @@
 <?php
-
+/**
+ * Strings for component 'assignsubmission_blog', language 'en'
+ *
+ * @package assignsubmission_blog
+ * @copyright 2012 Department of Computer and System Sciences, 
+ *					Stockholm University  {@link http://dsv.su.se}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 $string['blog'] = 'Blog submission';
 $string['default'] = 'Enabled by default';
 $string['default_help'] = 'If set, this submission method will be enabled by default for all new assignments.';

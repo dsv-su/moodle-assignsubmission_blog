@@ -1,16 +1,35 @@
 <?php
-	defined('MOODLE_INTERNAL') || die();
-	
-	define('ASSIGNSUBMISSION_BLOG_MAXENTRIES', 10);
-	define('ASSIGNSUBMISSION_BLOG_MAXCOMMENTS', 20);
+/**
+ * Library class for the blog submission plugin.
+ *
+ * @package assignsubmission_blog
+ * @copyright 2012 Department of Computer and System Sciences, 
+ *					Stockholm University  {@link http://dsv.su.se}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-	require_once($CFG->dirroot . '/mod/assign/submissionplugin.php');
+defined('MOODLE_INTERNAL') || die();
+	
+define('ASSIGNSUBMISSION_BLOG_MAXENTRIES', 10);
+define('ASSIGNSUBMISSION_BLOG_MAXCOMMENTS', 20);
+
+require_once($CFG->dirroot . '/mod/assign/submissionplugin.php');
 
 class assign_submission_blog extends assign_submission_plugin {
+
+	/**
+	 * Get the name of the submission plugin
+	 * @return string
+	 */
 	public function get_name() {
         return get_string('blog', 'assignsubmission_blog');
     }
     
+    /**
+     * Get the default settings for the blog submission plugin.
+     *
+     * @param MoodleQuickForm $mform The form to append the elements to.
+     */
     public function get_settings(MoodleQuickForm $mform) {
     	$default_required_entries = $this->get_config('required_entries');
     	$default_required_comments = $this->get_config('required_comments');
@@ -39,12 +58,26 @@ class assign_submission_blog extends assign_submission_plugin {
     	$mform->disabledIf('assignsubmission_blog_required_comments', 'assignsubmission_blog_enabled', 'eq', 0);
     }
     
+    /**
+     * Save the settings for the plugin
+     * 
+     * @param stdClass $data
+     * @return bool
+     */
 	public function save_settings(stdClass $data) {
 		$this->set_config('required_entries', $data->assignsubmission_blog_required_entries);
 		$this->set_config('required_comments', $data->assignsubmission_blog_required_comments);
 		return true;
 	}
 	
+	/**
+	 * Displays the number of associated blog entries from a student in the submissions table
+	 * together with a link that will display the entries in question. 
+	 *
+	 * @param stdClass $submission The submission to show a summary of
+	 * @param bool $showviewlink Will be set to true to enable the view link
+	 * @return string
+	 */
 	public function view_summary(stdClass $submission, & $showviewlink) {
 		global $DB;
 		
@@ -57,6 +90,12 @@ class assign_submission_blog extends assign_submission_plugin {
 		return get_string('num_entries', 'assignsubmission_blog', $entries);
 	}
 	
+	/**
+	 * Displays all submitted entries for this assignment from a specified student.
+	 *
+	 * @param stdClass $submission
+	 * @return string
+	 */
 	public function view(stdClass $submission) {
 		global $CFG;
 		
@@ -73,6 +112,16 @@ class assign_submission_blog extends assign_submission_plugin {
 		return ob_get_clean();		
 	}
 	
+	/**
+	 * Handles the action from the "add/edit submission" button. If a student have no submissions
+	 * then it will be directed to the new entry form. Else the method will display the students submissions
+	 * together with links to edit them.
+	 * 
+	 * @param mixed $submission stdClass|null
+	 * @param MoodleQuickForm $mform
+	 * @param stdClass $data
+	 * @return bool
+	 */
 	public function get_form_elements($submission, MoodleQuickForm $mform, stdClass $data) {
 		global $CFG;
 		
