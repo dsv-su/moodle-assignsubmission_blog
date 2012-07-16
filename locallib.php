@@ -70,24 +70,39 @@ class assign_submission_blog extends assign_submission_plugin {
 		return true;
 	}
 	
-	/**
-	 * Displays the number of associated blog entries from a student in the submissions table
-	 * together with a link that will display the entries in question. 
-	 *
-	 * @param stdClass $submission The submission to show a summary of
-	 * @param bool $showviewlink Will be set to true to enable the view link
-	 * @return string
-	 */
-	public function view_summary(stdClass $submission, & $showviewlink) {
-		global $DB;
-		
-		$showviewlink = true;
-		
-		$entries = $DB->count_records_sql('SELECT COUNT(ba.id) FROM {blog_association} ba JOIN {post} p ON ba.blogid = p.id'
-				.' WHERE ba.contextid = ? AND p.userid = ?', 
-				array($this->assignment->get_context()->id, $submission->userid));
-				
-		return get_string('num_entries', 'assignsubmission_blog', $entries);
+    /**
+     * Displays the number of associated blog entries from a student in the submissions table
+     * together with a link that will display the entries in question. 
+     * If the student meets the required number of entries, the submission status will be given a green background color.
+     *
+     * @param stdClass $submission The submission to show a summary of
+     * @param bool $showviewlink Will be set to true to enable the view link
+     * @return string
+     */
+    public function view_summary(stdClass $submission, & $showviewlink) {
+        global $DB;
+
+        $showviewlink = true;
+        $entries = $DB->count_records_sql('SELECT COUNT(ba.id) FROM {blog_association} ba JOIN {post} p ON ba.blogid = p.id'
+                .' WHERE ba.contextid = ? AND p.userid = ?', array(
+                    $this->assignment->get_context()->id,
+                    $submission->userid
+                ));
+
+        $student_meets_requirements = $entries >= $this->get_config('required_entries');
+
+        if ($student_meets_requirements) {
+            $divclass = 'submissionstatussubmitted';
+        } else {
+            $divclass = 'submissionstatus';
+        }
+
+        $result = html_writer::start_tag('div', array('class' => $divclass));
+
+        $result .= get_string($entries > 1 ? 'num_entries' : 'num_entry', 'assignsubmission_blog', $entries);
+        $result .= html_writer::end_tag('div');
+
+        return $result;
 	}
 	
 	/**
