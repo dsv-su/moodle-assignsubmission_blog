@@ -8,79 +8,181 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Determines if this entry is relevant for the blog submission type.
+ *
+ * @param mixed $entry
+ * @return mixed if relevant: the associated coursemodule, else false.
+ */
+function entry_is_relevant($entry) {
+    global $DB;
+
+    if (!isset($entry->modassoc)) {
+        return false;
+    }
+
+    $context = get_context_instance_by_id($entry->modassoc);
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return false;
+    }
+
+    $cm = get_coursemodule_from_id('assign', $context->instanceid);
+    if (!$cm) {
+       return false;
+    }
+
+    if (!blogsubmission_is_active($cm->instance)) {
+        return false;
+    }
+
+    if (!has_capability('mod/assign:submit', $context)) {
+        return false;
+    }
+
+    require_sesskey();
+    return $cm;
+}
 
 /**
- * Handles a new entry in the blog. 
+ * This function determines if an assignment, specified by its id, is using the blogsubmission plugin.
+ *
+ * @param int $assign_instance
+ * @return bool
+ */
+function blogsubmission_is_active($assign_instance) {
+    global $DB;
+
+    $blogsubmission_active = $DB->get_record('assign_plugin_config', array(
+        'assignment' => $assign_instance,
+        'plugin' => 'blog',
+        'subtype' => 'assignsubmission',
+        'name' => 'enabled'
+    ));
+
+    //This is a workaround for MDL-27629
+    return $blogsubmission_active->value == "1";
+}
+
+/**
+ * Checks if a user have submitted blog entries that is associated with an assignment, identified by it's contexid.
+ *
+ * @param int $userid
+ * @param int $contextid
+ * @return bool
+ */
+function user_have_associated_entries($userid, $contextid) {
+    global $DB;
+
+    $users_entries = $DB->count_records_sql('SELECT COUNT(p.id) FROM {post} p, {blog_association} ba ' 
+            .'WHERE p.id = ba.blogid AND p.userid = ? AND ba.contextid = ?', array($userid, $contextid));
+    return $users_entries > 0;
+}
+
+/**
+ * Check if a user have a registered submission to an assignment.
+ *
+ * @param mixed $userid
+ * @param mixed $assignment_instance
+ * @return mixed False if no submission, else the submission record.
+ */
+function user_have_registred_submission($userid, $assignment_instance) {
+    global $DB;
+
+    $submission = $DB->get_record('assign_submission', array(
+        'assignment' => $assignment_instance,
+        'userid' => $userid
+    ));
+
+    return $submission;
+}
+
+/**
+ * Handles a new entry in the blog.
  * Will determine if the entry is associated with a blog assignment and,
  * if so, add a new submission. 
  *
  * @param mixed $entry 
- * @return bool
+ * @return bool True to indicate that the event was handled successfully.
  */
 function entry_added_handler($entry) {
-	global $CFG, $USER, $DB;
-	if (isset($entry->modassoc)) {
-		$context_data = $DB->get_record('context', 
-				array('id' => $entry->modassoc));
-		
-		$cm = get_coursemodule_from_id('assign', $context_data->instanceid);
-		if ($cm->modname == 'assign') {
-			$course = $DB->get_record('course', array('id' => $cm->course));
+    global $CFG, $USER, $DB;
 
-			// Replace this variable with a function call?
-			$context = get_context_instance_by_id($entry->modassoc);
-			$blogsubmission_active = $DB->get_record('assign_plugin_config', 
-					array('assignment' => $cm->instance, 
-					'plugin' => 'blog', 
-					'subtype' => 'assignsubmission',
-					'name' => 'enabled'));
-			
-			//This is a workaround for MDL-27629
-			if ($blogsubmission_active && has_capability('mod/assign:submit', $context)) {
-				require_sesskey();
-				
-				// Since assign::get_user_submission is private, we need to replicate it's
-				// functionallity
-				
-				$existing_submission = $DB->get_record('assign_submission', 
-						array('assignment' => $cm->instance, 'userid' => $USER->id));
-				if ($existing_submission) {
-					$existing_submission->timemodified = time();
-					$DB->update_record('assign_submission', $existing_submission);
-				} else {
-					$new_submission = new stdClass();
-					$new_submission->assignment = $cm->instance;
-					$new_submission->userid = $USER->id;
-					$new_submission->timecreated = time();
-					$new_submission->timemodified = $new_submission->timecreated;
-					$new_submission->status = 'submitted';
-					$DB->insert_record('assign_submission', $new_submission);
-				}	
-				// Here be logging!
-			}
-		}
-	}
-	return true;
+    if (($cm = entry_is_relevant($entry))) {
+
+        // Since assign::get_user_submission is private, we need to replicate it's functionality
+        if (($existing_submission = user_have_registred_submission($entry->userid, $cm->instance))) {
+            $existing_submission->timemodified = time();
+            $DB->update_record('assign_submission', $existing_submission);
+        } else {
+            $new_submission = new stdClass();
+            $new_submission->assignment = $cm->instance;
+            $new_submission->userid = $entry->userid;
+            $new_submission->timecreated = time();
+            $new_submission->timemodified = $new_submission->timecreated;
+            $new_submission->status = 'submitted';
+            $DB->insert_record('assign_submission', $new_submission);
+        }
+        // Here be logging!
+    }
+
+    return true;
 }
 
 /**
- * Handles an edited entry in the blog. 
- * Currenty not implemented. 
+ * This function removes a submission from the assign_submission table if the user have no associated entries to this assignment.
+ *
+ * @param int $userid
+ * @param int $contextid
+ * @param int $instanceid
+ * @return void
+ */
+function remove_submission_if_no_associated_entries($userid, $contextid, $instanceid) {
+    global $DB;
+
+    if (!user_have_associated_entries($userid, $contextid)
+            && user_have_registred_submission($userid, $instanceid)) {
+        $DB->delete_records('assign_submission', array('assignment' => $instanceid, 'userid' => $userid));
+    }
+}
+
+/**
+ * Handles an edited entry in the blog.
+ * If the modassoc value of the entry is 0, then the module association for this entry have been removed.
+ * If the module association have been removed, check if there are any assignments where the user have an registred submission
+ * but not associated blog entries. If so, remove the registred submission.
  *
  * @param mixed $entry 
  * @return bool
  */
 function entry_edited_handler($entry) {
-	return true;
+    global $DB;
+
+    if (isset($entry->modassoc) && $entry->modassoc === '0') {
+        $user_submissions = $DB->get_records('assign_submission', array('userid' => $entry->userid));
+        foreach ($user_submissions as $index => $submission) {
+            if (blogsubmission_is_active($submission->assignment)) {
+                // Get the contextid for the assignment that the submission is submitted to
+                $contextid = $DB->get_field_sql("SELECT c.id FROM {context} c JOIN {course_modules} cm ON c.instanceid = cm.id"
+                        ." WHERE c.contextlevel = ? AND cm.instance = ?", array(CONTEXT_MODULE, $submission->assignment));
+                remove_submission_if_no_associated_entries($entry->userid, $contextid, $submission->assignment);
+            }
+        }
+    }
+    return true;
 }
 
 /**
  * Handles a removed entry in the blog.
- * Currently not implemented. 
+ * If the user doesn't have any associated entries left, the assignment submission will be removed.
  *
  * @param mixed $entry
- * @return bool
+ * @return bool True to indicate that the event was handled successfully.
  */
 function entry_deleted_handler($entry) {
-	return true;
+    global $DB;
+
+    if (($cm = entry_is_relevant($entry))) {
+        remove_submission_if_no_associated_entries($entry->userid, $entry->modassoc, $cm->instance);
+    }
+    return true;
 }
