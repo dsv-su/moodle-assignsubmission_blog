@@ -89,7 +89,14 @@ class assign_submission_blog extends assign_submission_plugin {
                     $submission->userid
                 ));
 
-        $student_meets_requirements = $entries >= $this->get_config('required_entries');
+        $comments = $DB->count_records_sql('SELECT COUNT(ba.blogid) FROM {blog_association} ba '
+                . 'WHERE ba.blogid IN (SELECT itemid FROM {comments} WHERE userid = ?) AND contextid = ?', array(
+                    $submission->userid,
+                    $this->assignment->get_context()->id
+                ));
+
+        $student_meets_requirements = $entries >= $this->get_config('required_entries') 
+                && $comments >= $this->get_config('required_comments');
 
         if ($student_meets_requirements) {
             $divclass = 'submissionstatussubmitted';
@@ -98,35 +105,52 @@ class assign_submission_blog extends assign_submission_plugin {
         }
 
         $result = html_writer::start_tag('div', array('class' => $divclass));
-
-        $result .= get_string($entries > 1 ? 'num_entries' : 'num_entry', 'assignsubmission_blog', $entries);
+        $result .= get_string($entries == 1 ? 'num_entry' : 'num_entries', 'assignsubmission_blog', $entries);
+        $result .= html_writer::start_tag('br');
+        $result .= get_string($comments == 1 ? 'num_comment' : 'num_comments', 'assignsubmission_blog', $comments);
         $result .= html_writer::end_tag('div');
 
         return $result;
 	}
 	
-	/**
-	 * Displays all submitted entries for this assignment from a specified student.
-	 *
-	 * @param stdClass $submission
-	 * @return string
-	 */
-	public function view(stdClass $submission) {
-		global $CFG;
-		
-		require_once('../../blog/locallib.php');
-		$bloglisting = new blog_listing(array('user' => $submission->userid, 
-				'module' => $this->assignment->get_course_module()->id));
+    /**
+     * Displays all submitted entries for this assignment from a specified student.
+     *
+     * @param stdClass $submission
+     * @return string
+     */
+    public function view(stdClass $submission) {
+        global $CFG, $DB, $OUTPUT;
 
-		ob_start();
-		foreach ($bloglisting->get_entries() as $entry) {
-			$blogentry = new blog_entry(null, $entry);
-			$blogentry->print_html();
-		}
-		
-		return ob_get_clean();		
-	}
-	
+        require_once('../../blog/locallib.php');
+        $bloglisting = new blog_listing(array(
+            'user' => $submission->userid,
+            'module' => $this->assignment->get_course_module()->id
+        ));
+
+        $comments = $DB->get_records_sql('SELECT ba.blogid FROM {blog_association} ba '
+                .'WHERE ba.blogid IN (SELECT itemid FROM {comments} WHERE userid = ?) AND contextid = ?', array(
+                    $submission->userid,
+                    $this->assignment->get_context()->id
+                ));
+
+        ob_start();
+        echo $OUTPUT->heading(get_string('blogentries', 'blog'), 2);
+        foreach ($bloglisting->get_entries() as $entry) {
+            $blogentry = new blog_entry(null, $entry);
+            $blogentry->print_html();
+        }
+
+        if (count($comments) > 0) {
+            echo $OUTPUT->heading(get_string('comments'), 2);
+            foreach ($comments as $entry) {
+                $blogentry = new blog_entry($entry->blogid);
+                $blogentry->print_html();
+            }
+        }
+        return ob_get_clean();
+    }
+
 	/**
 	 * Handles the action from the "add/edit submission" button. If a student have no submissions
 	 * then it will be directed to the new entry form. Else the method will display the students submissions
