@@ -3,7 +3,7 @@
  * This file contains the event hooks for the submission blog plugin.
  *
  * @package assignsubmission_blog
- * @copyright 2012 Department of Computer and System Sciences, 
+ * @copyright 2012 Department of Computer and System Sciences,
  *					Stockholm University  {@link http://dsv.su.se}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,7 +28,7 @@ function entry_is_relevant($entry) {
 
     $cm = get_coursemodule_from_id('assign', $context->instanceid);
     if (!$cm) {
-       return false;
+        return false;
     }
 
     if (!blogsubmission_is_active($cm->instance)) {
@@ -53,10 +53,10 @@ function blogsubmission_is_active($assign_instance) {
     global $DB;
 
     $blogsubmission_active = $DB->get_record('assign_plugin_config', array(
-        'assignment' => $assign_instance,
-        'plugin' => 'blog',
-        'subtype' => 'assignsubmission',
-        'name' => 'enabled'
+            'assignment' => $assign_instance,
+            'plugin' => 'blog',
+            'subtype' => 'assignsubmission',
+            'name' => 'enabled'
     ));
 
     //This is a workaround for MDL-27629
@@ -73,7 +73,7 @@ function blogsubmission_is_active($assign_instance) {
 function user_have_associated_entries($userid, $contextid) {
     global $DB;
 
-    $users_entries = $DB->count_records_sql('SELECT COUNT(p.id) FROM {post} p, {blog_association} ba ' 
+    $users_entries = $DB->count_records_sql('SELECT COUNT(p.id) FROM {post} p, {blog_association} ba '
             .'WHERE p.id = ba.blogid AND p.userid = ? AND ba.contextid = ?', array($userid, $contextid));
     return $users_entries > 0;
 }
@@ -86,9 +86,9 @@ function user_have_associated_entries($userid, $contextid) {
  * @return mixed False if no submission, else the submission record.
  */
 function user_have_registred_submission($userid, $assignment_instance) {
-    global $DB;
+     global $DB;
 
-    $submission = $DB->get_record('assign_submission', array(
+     $submission = $DB->get_record('assign_submission', array(
         'assignment' => $assignment_instance,
         'userid' => $userid
     ));
@@ -99,9 +99,9 @@ function user_have_registred_submission($userid, $assignment_instance) {
 /**
  * Handles a new entry in the blog.
  * Will determine if the entry is associated with a blog assignment and,
- * if so, add a new submission. 
+ * if so, add a new submission.
  *
- * @param mixed $entry 
+ * @param mixed $entry
  * @return bool True to indicate that the event was handled successfully.
  */
 function entry_added_handler($entry) {
@@ -151,7 +151,7 @@ function remove_submission_if_no_associated_entries($userid, $contextid, $instan
  * If the module association have been removed, check if there are any assignments where the user have an registred submission
  * but not associated blog entries. If so, remove the registred submission.
  *
- * @param mixed $entry 
+ * @param mixed $entry
  * @return bool
  */
 function entry_edited_handler($entry) {
@@ -164,7 +164,7 @@ function entry_edited_handler($entry) {
                 // Get the contextid for the assignment that the submission is submitted to
                 $contextid = $DB->get_field_sql("SELECT c.id FROM {context} c JOIN {course_modules} cm ON c.instanceid = cm.id"
                         ." WHERE c.contextlevel = ? AND cm.instance = ?", array(CONTEXT_MODULE, $submission->assignment));
-                remove_submission_if_no_associated_entries($entry->userid, $contextid, $submission->assignment);
+                    remove_submission_if_no_associated_entries($entry->userid, $contextid, $submission->assignment);
             }
         }
     }
