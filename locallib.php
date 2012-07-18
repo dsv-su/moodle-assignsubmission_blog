@@ -89,7 +89,8 @@ class assign_submission_blog extends assign_submission_plugin {
                 ));
 
         $comments = $DB->count_records_sql('SELECT COUNT(ba.blogid) FROM {blog_association} ba '
-                . 'WHERE ba.blogid IN (SELECT itemid FROM {comments} WHERE userid = ?) AND contextid = ?', array(
+                . 'WHERE ba.blogid IN (SELECT itemid FROM {comments} c WHERE userid = ? AND ba.blogid = c.itemid '
+                . 'AND c.commentarea = "format_blog") AND contextid = ?', array(
                     $submission->userid,
                     $this->assignment->get_context()->id
                 ));
@@ -133,7 +134,8 @@ class assign_submission_blog extends assign_submission_plugin {
         ));
 
         $comments = $DB->get_records_sql('SELECT ba.blogid FROM {blog_association} ba '
-                .'WHERE ba.blogid IN (SELECT itemid FROM {comments} WHERE userid = ?) AND contextid = ?', array(
+                . 'WHERE ba.blogid IN (SELECT itemid FROM {comments} c WHERE userid = ? AND c.itemid = ba.blogid '
+                . 'AND commentarea = "format_blog") AND contextid = ?', array(
                     $submission->userid,
                     $this->assignment->get_context()->id
                 ));
