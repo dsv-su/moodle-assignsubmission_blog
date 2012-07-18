@@ -108,19 +108,24 @@ function entry_added_handler($entry) {
     global $CFG, $USER, $DB;
 
     if (($cm = entry_is_relevant($entry))) {
+        $assignmentduedate = $DB->get_field('assign', 'duedate', array(
+            'id' => $cm->instance
+        ));
 
-        // Since assign::get_user_submission is private, we need to replicate it's functionality
-        if (($existing_submission = user_have_registred_submission($entry->userid, $cm->instance))) {
-            $existing_submission->timemodified = time();
-            $DB->update_record('assign_submission', $existing_submission);
-        } else {
-            $new_submission = new stdClass();
-            $new_submission->assignment = $cm->instance;
-            $new_submission->userid = $entry->userid;
-            $new_submission->timecreated = time();
-            $new_submission->timemodified = $new_submission->timecreated;
-            $new_submission->status = 'submitted';
-            $DB->insert_record('assign_submission', $new_submission);
+        if (time() < $assignmentduedate) {
+            // Since assign::get_user_submission is private, we need to replicate it's functionality
+            if (($existing_submission = user_have_registred_submission($entry->userid, $cm->instance))) {
+                $existing_submission->timemodified = time();
+                $DB->update_record('assign_submission', $existing_submission);
+            } else {
+                $new_submission = new stdClass();
+                $new_submission->assignment = $cm->instance;
+                $new_submission->userid = $entry->userid;
+                $new_submission->timecreated = time();
+                $new_submission->timemodified = $new_submission->timecreated;
+                $new_submission->status = 'submitted';
+                $DB->insert_record('assign_submission', $new_submission);
+            }
         }
         // Here be logging!
     }
