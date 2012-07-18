@@ -122,6 +122,11 @@ class assign_submission_blog extends assign_submission_plugin {
         global $CFG, $DB, $OUTPUT;
 
         require_once('../../blog/locallib.php');
+        require_once('../../comment/lib.php');
+
+        // This line prepares the comment subsystem. For example it adds a couple of language strings to js.
+        comment::init();
+
         $bloglisting = new blog_listing(array(
             'user' => $submission->userid,
             'module' => $this->assignment->get_course_module()->id
