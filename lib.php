@@ -114,17 +114,17 @@ function entry_added_handler($entry) {
 
         if (time() < $assignmentduedate) {
             // Since assign::get_user_submission is private, we need to replicate it's functionality
-            if (($existing_submission = user_have_registred_submission($entry->userid, $cm->instance))) {
-                $existing_submission->timemodified = time();
-                $DB->update_record('assign_submission', $existing_submission);
+            if (($existingsubmission = user_have_registred_submission($entry->userid, $cm->instance))) {
+                $existingsubmission->timemodified = time();
+                $DB->update_record('assign_submission', $existingsubmission);
             } else {
-                $new_submission = new stdClass();
-                $new_submission->assignment = $cm->instance;
-                $new_submission->userid = $entry->userid;
-                $new_submission->timecreated = time();
-                $new_submission->timemodified = $new_submission->timecreated;
-                $new_submission->status = 'submitted';
-                $DB->insert_record('assign_submission', $new_submission);
+                $newsubmission = new stdClass();
+                $newsubmission->assignment = $cm->instance;
+                $newsubmission->userid = $entry->userid;
+                $newsubmission->timecreated = time();
+                $newsubmission->timemodified = $newsubmission->timecreated;
+                $newsubmission->status = 'submitted';
+                $DB->insert_record('assign_submission', $newsubmission);
             }
         }
         // Here be logging!
@@ -163,8 +163,8 @@ function entry_edited_handler($entry) {
     global $DB;
 
     if (isset($entry->modassoc) && $entry->modassoc === '0') {
-        $user_submissions = $DB->get_records('assign_submission', array('userid' => $entry->userid));
-        foreach ($user_submissions as $index => $submission) {
+        $usersubmissions = $DB->get_records('assign_submission', array('userid' => $entry->userid));
+        foreach ($usersubmissions as $index => $submission) {
             if (blogsubmission_is_active($submission->assignment)) {
                 // Get the contextid for the assignment that the submission is submitted to
                 $contextid = $DB->get_field_sql("SELECT c.id FROM {context} c JOIN {course_modules} cm ON c.instanceid = cm.id"
