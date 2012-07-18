@@ -108,11 +108,13 @@ function entry_added_handler($entry) {
     global $CFG, $USER, $DB;
 
     if (($cm = entry_is_relevant($entry))) {
-        $assignmentduedate = $DB->get_field('assign', 'duedate', array(
+        $assignmentinstance = $DB->get_record('assign', array(
             'id' => $cm->instance
         ));
 
-        if (time() < $assignmentduedate) {
+        $withinassignmentlimits = time() >= $assignmentinstance->allowsubmissionsfromdate && time() <= $assignmentinstance->duedate;
+
+        if (!$assignmentinstance->preventlatesubmissions || $withinassignmentlimits) {
             // Since assign::get_user_submission is private, we need to replicate it's functionality
             if (($existingsubmission = user_have_registred_submission($entry->userid, $cm->instance))) {
                 $existingsubmission->timemodified = time();
