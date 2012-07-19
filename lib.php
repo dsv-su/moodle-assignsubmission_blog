@@ -49,18 +49,18 @@ function entry_is_relevant($entry) {
  * @param int $assign_instance
  * @return bool
  */
-function blogsubmission_is_active($assign_instance) {
+function blogsubmission_is_active($assigninstance) {
     global $DB;
 
-    $blogsubmission_active = $DB->get_record('assign_plugin_config', array(
-            'assignment' => $assign_instance,
+    $blogsubmissionactive = $DB->get_record('assign_plugin_config', array(
+            'assignment' => $assigninstance,
             'plugin' => 'blog',
             'subtype' => 'assignsubmission',
             'name' => 'enabled'
     ));
 
     //This is a workaround for MDL-27629
-    return $blogsubmission_active->value == "1";
+    return $blogsubmissionactive->value == "1";
 }
 
 /**
@@ -73,9 +73,9 @@ function blogsubmission_is_active($assign_instance) {
 function user_have_associated_entries($userid, $contextid) {
     global $DB;
 
-    $users_entries = $DB->count_records_sql('SELECT COUNT(p.id) FROM {post} p, {blog_association} ba '
+    $usersentries = $DB->count_records_sql('SELECT COUNT(p.id) FROM {post} p, {blog_association} ba '
             .'WHERE p.id = ba.blogid AND p.userid = ? AND ba.contextid = ?', array($userid, $contextid));
-    return $users_entries > 0;
+    return $usersentries > 0;
 }
 
 /**
