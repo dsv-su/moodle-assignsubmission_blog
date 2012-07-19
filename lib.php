@@ -151,7 +151,9 @@ function remove_submission_if_no_associated_entries($userid, $contextid, $instan
 
     if (!user_have_associated_entries($userid, $contextid)
             && user_have_registred_submission($userid, $instanceid)) {
-        $DB->delete_records('assign_submission', array('assignment' => $instanceid, 'userid' => $userid));
+        $DB->delete_records('assign_submission', array(
+            'assignment' => $instanceid, 
+            'userid' => $userid));
         if ($cm == null) {
             $context = get_context_instance_by_id($contextid);
             $cm = get_coursemodule_from_id('assign', $context->instanceid);
@@ -174,7 +176,9 @@ function entry_edited_handler($entry) {
     global $DB;
 
     if (isset($entry->modassoc) && $entry->modassoc === '0') {
-        $usersubmissions = $DB->get_records('assign_submission', array('userid' => $entry->userid));
+        $usersubmissions = $DB->get_records('assign_submission', array(
+            'userid' => $entry->userid
+        ));
         foreach ($usersubmissions as $index => $submission) {
             if (blogsubmission_is_active($submission->assignment)) {
                 // Get the contextid for the assignment that the submission is submitted to
