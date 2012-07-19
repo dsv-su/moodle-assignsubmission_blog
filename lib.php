@@ -119,6 +119,8 @@ function entry_added_handler($entry) {
             if (($existingsubmission = user_have_registred_submission($entry->userid, $cm->instance))) {
                 $existingsubmission->timemodified = time();
                 $DB->update_record('assign_submission', $existingsubmission);
+                add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
+                        'Assignment blog submission: Submission updated', $cm->id, $entry->userid);
             } else {
                 $newsubmission = new stdClass();
                 $newsubmission->assignment = $cm->instance;
@@ -127,9 +129,10 @@ function entry_added_handler($entry) {
                 $newsubmission->timemodified = $newsubmission->timecreated;
                 $newsubmission->status = 'submitted';
                 $DB->insert_record('assign_submission', $newsubmission);
+                add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id, 
+                        'Assignment blog submission: Associated blog entry submitted to assignment', $cm->id, $entry->userid);
             }
         }
-        // Here be logging!
     }
 
     return true;
@@ -143,12 +146,18 @@ function entry_added_handler($entry) {
  * @param int $instanceid
  * @return void
  */
-function remove_submission_if_no_associated_entries($userid, $contextid, $instanceid) {
+function remove_submission_if_no_associated_entries($userid, $contextid, $instanceid, $cm = null) {
     global $DB;
 
     if (!user_have_associated_entries($userid, $contextid)
             && user_have_registred_submission($userid, $instanceid)) {
         $DB->delete_records('assign_submission', array('assignment' => $instanceid, 'userid' => $userid));
+        if ($cm == null) {
+            $context = get_context_instance_by_id($contextid);
+            $cm = get_coursemodule_from_id('assign', $context->instanceid);
+        }
+        add_to_log($cm->course, 'assign', 'delete', 'view.php?id='.$cm->id,
+                'Assignment blog submission: Submission removed', $cm->id, $userid);
     }
 }
 
@@ -171,7 +180,8 @@ function entry_edited_handler($entry) {
                 // Get the contextid for the assignment that the submission is submitted to
                 $contextid = $DB->get_field_sql("SELECT c.id FROM {context} c JOIN {course_modules} cm ON c.instanceid = cm.id"
                         ." WHERE c.contextlevel = ? AND cm.instance = ?", array(CONTEXT_MODULE, $submission->assignment));
-                    remove_submission_if_no_associated_entries($entry->userid, $contextid, $submission->assignment);
+
+                remove_submission_if_no_associated_entries($entry->userid, $contextid, $submission->assignment);
             }
         }
     }
@@ -189,7 +199,7 @@ function entry_deleted_handler($entry) {
     global $DB;
 
     if (($cm = entry_is_relevant($entry))) {
-        remove_submission_if_no_associated_entries($entry->userid, $entry->modassoc, $cm->instance);
+        remove_submission_if_no_associated_entries($entry->userid, $entry->modassoc, $cm->instance, $cm);
     }
     return true;
 }
