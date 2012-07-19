@@ -166,9 +166,10 @@ class assign_submission_blog extends assign_submission_plugin {
     }
 
     /**
-     * Handles the action from the "add/edit submission" button. If a student have no submissions
-     * then it will be directed to the new entry form. Else the method will display the students submissions
-     * together with links to edit them.
+     * Handles the action from the "add/edit submission" button. If a student have no submissions and blogsubmission is the only
+     * active submission type then he/she will be directed to the new entry form. If other submission types are active then a
+     * button "Add new entry" will be displayed alongside the forms for the other submission types.
+     * If a student have previous submission then the students submissions will be displayed together with links to edit them.
      * 
      * @param mixed $submission stdClass|null
      * @param MoodleQuickForm $mform
@@ -187,7 +188,20 @@ class assign_submission_blog extends assign_submission_plugin {
             )));
             $mform->addElement('html', $this->view($submission));
         } else {
-            redirect($addnewentryurl);
+            $activesubmissionplugincount = 0;
+            foreach ($this->assignment->get_submission_plugins() as $plugin) {
+                if ($plugin->is_enabled()) {
+                    $activesubmissionplugincount++;
+                }
+            }
+
+            if ($activesubmissionplugincount == 1) {
+                redirect($addnewentryurl);
+            } else {
+                $mform->addElement('html', html_writer::tag('a', get_string('addnewentry', 'blog'), array(
+                    'href' => $addnewentryurl
+                )));
+            }
         }
         return true;
     }
