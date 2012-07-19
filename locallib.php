@@ -83,21 +83,7 @@ class assign_submission_blog extends assign_submission_plugin {
 
         $showviewlink = true;
 
-        $entriesquery = 'SELECT COUNT(p.id) FROM {post} p JOIN {blog_association} ba ON ba.blogid = p.id WHERE p.userid = ? '.
-                        'AND ba.contextid = ?';
-        $commentsquery = 'SELECT COUNT(p.id) FROM {post} p JOIN {blog_association} ba ON ba.blogid = p.id '.
-                         'WHERE p.id IN (SELECT itemid FROM {comments} c WHERE userid = ? AND c.itemid = p.id '.
-                         'AND c.commentarea = "format_blog") AND ba.contextid = ?';
-
-        if ($this->assignment->get_instance()->preventlatesubmissions) {
-            $daterestriction = ' AND p.created BETWEEN '.$this->assignment->get_instance()->allowsubmissionsfromdate.
-            ' AND '.$this->assignment->get_instance()->duedate;
-            $entriesquery  .= $daterestriction;
-            $commentsquery .= $daterestriction;
-        }
-
-        $entriescount = $DB->count_records_sql($entriesquery, array($submission->userid, $this->assignment->get_context()->id));
-        $commentscount = $DB->count_records_sql($commentsquery, array($submission->userid, $this->assignment->get_context()->id));
+        list($entriescount, $commentscount) = $this->get_entries_and_comments($submission->userid, true);
 
         $studentmeetsrequirements = $entriescount >= $this->get_config('required_entries') 
                 && $commentscount >= $this->get_config('required_comments');
@@ -131,22 +117,8 @@ class assign_submission_blog extends assign_submission_plugin {
 
         // This line prepares the comment subsystem. For example it adds a couple of language strings to js.
         comment::init();
-
-        $entriesquery = 'SELECT p.id FROM {post} p JOIN {blog_association} ba ON ba.blogid = p.id WHERE p.userid = ? '.
-                        'AND ba.contextid = ?';
-        $commentsquery = 'SELECT p.id FROM {post} p JOIN {blog_association} ba ON ba.blogid = p.id '.
-                         'WHERE p.id IN (SELECT itemid FROM {comments} c WHERE userid = ? AND c.itemid = p.id '.
-                         'AND c.commentarea = "format_blog") AND ba.contextid = ?';
-
-        if ($this->assignment->get_instance()->preventlatesubmissions) {
-            $daterestriction = ' AND p.created BETWEEN '.$this->assignment->get_instance()->allowsubmissionsfromdate.
-                               ' AND '.$this->assignment->get_instance()->duedate;
-            $entriesquery  .= $daterestriction;
-            $commentsquery .= $daterestriction;
-        }
         
-        $entries = $DB->get_records_sql($entriesquery, array($submission->userid, $this->assignment->get_context()->id));
-        $comments = $DB->get_records_sql($commentsquery, array($submission->userid, $this->assignment->get_context()->id));
+        list($entries, $comments) = $this->get_entries_and_comments($submission->userid);
         
         ob_start();
         echo $OUTPUT->heading(get_string('blogentries', 'blog'), 2);
@@ -203,5 +175,46 @@ class assign_submission_blog extends assign_submission_plugin {
             }
         }
         return true;
+    }
+
+    /**
+     * Fetches or counts (depending on the value of the parameter $countentries) all entries and comments that a specified user 
+     * have submitted to this assignment.
+     * 
+     * @param int $userid
+     * @param bool $countentries If true, the method returns a count of the number of entries and comments by the user. If false
+     *     the method returns the entries and comments. Default value is false.
+     * @return void
+     */
+    private function get_entries_and_comments($userid, $countentries = false) {
+        global $DB;
+        if ($countentries) {
+            $selectstatement = 'SELECT COUNT(p.id) ';
+        } else {
+            $selectstatement = 'SELECT p.id ';
+        }
+
+        $entriesquery = $selectstatement.'FROM {post} p JOIN {blog_association} ba ON ba.blogid = p.id WHERE p.userid = ? '.
+                        'AND ba.contextid = ?';
+        $commentsquery = $selectstatement.'FROM {post} p JOIN {blog_association} ba ON ba.blogid = p.id '.
+                         'WHERE p.id IN (SELECT itemid FROM {comments} c WHERE userid = ? AND c.itemid = p.id '.
+                         'AND c.commentarea = "format_blog") AND ba.contextid = ?';
+
+        if ($this->assignment->get_instance()->preventlatesubmissions) {
+            $daterestriction = ' AND p.created BETWEEN '.$this->assignment->get_instance()->allowsubmissionsfromdate.
+                               ' AND '.$this->assignment->get_instance()->duedate;
+            $entriesquery  .= $daterestriction;
+            $commentsquery .= $daterestriction;
+        }
+
+        if ($countentries) {
+            $entries = $DB->count_records_sql($entriesquery, array($userid, $this->assignment->get_context()->id));
+            $comments = $DB->count_records_sql($commentsquery, array($userid, $this->assignment->get_context()->id));
+        } else {
+            $entries = $DB->get_records_sql($entriesquery, array($userid, $this->assignment->get_context()->id));
+            $comments = $DB->get_records_sql($commentsquery, array($userid, $this->assignment->get_context()->id));
+        }
+
+        return array($entries, $comments);
     }
 }
