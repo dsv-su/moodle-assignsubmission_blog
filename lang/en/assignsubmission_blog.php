@@ -8,6 +8,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['blog'] = 'Blog submission';
+$string['blogfilename'] = 'blogsubmission.html';
 $string['default'] = 'Enabled by default';
 $string['default_help'] = 'If set, this submission method will be enabled by default for all new assignments.';
 $string['numcomment'] = '{$a} comment';

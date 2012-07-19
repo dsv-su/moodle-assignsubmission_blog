@@ -8,6 +8,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['blog'] = 'Blogginlämning';
+$string['blogfilename'] = 'blogsubmission.html';
 $string['default'] = 'Automatiskt aktiverad';
 $string['default_help'] = 'Om vald kommer den här inlämningsmetoden aktiveras för alla nya uppgifter.';
 $string['numcomment'] = '{$a} kommentar';

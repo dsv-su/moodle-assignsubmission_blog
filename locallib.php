@@ -217,4 +217,45 @@ class assign_submission_blog extends assign_submission_plugin {
 
         return array($entries, $comments);
     }
+
+    /**
+     * Produce a list of files suitable for export that represents this submission
+     * 
+     * @param stdClass $submission
+     * @return array an array of files indexed by filename
+     */
+    public function get_files(stdClass $submission) {
+        global $DB, $CFG;
+        require_once('../../blog/locallib.php');
+
+        $files = array();
+        list($entries, $comments) = $this->get_entries_and_comments($submission->userid);
+
+        if ($entries) {
+            $user = $DB->get_record('user', array(
+                'id' => $submission->userid
+            ), 'id, username, firstname, lastname', MUST_EXIST);
+
+            $finaltext = '<html>';
+            $finaltext .= '    <head>';
+            $finaltext .= '        <title>Blog entries by '.fullname($user).' on '.$this->assignment->get_instance()->name.'</title>';
+            $finaltext .= '        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
+            $finaltext .= '   </head>';
+            $finaltext .= '   <body>';
+
+            foreach ($entries as $entryid) {
+                $entry = new blog_entry($entryid->id);
+                ob_start();
+                $entry->print_html();
+                $finaltext .= ob_get_contents();
+                ob_end_clean();
+            }
+
+            $finaltext .= '    </body>';
+            $finaltext .= '</html>';
+            $files[get_string('blogfilename', 'assignsubmission_blog')] = array($finaltext);
+        }
+
+        return $files;
+    }
 }
