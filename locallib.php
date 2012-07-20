@@ -258,4 +258,15 @@ class assign_submission_blog extends assign_submission_plugin {
 
         return $files;
     }
+    
+    /**
+     * Are there any associated entries for this submission?
+     *
+     * @param stdClass $submission
+     * @return bool
+     */
+    public function is_empty(stdClass $submission) {
+        list($entriescount, $commentedentriescount) = $this->get_entries_and_comments($submission->userid, true);
+        return $entriescount + $commentedentriescount == 0;
+    }
 }
