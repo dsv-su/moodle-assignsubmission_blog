@@ -96,7 +96,7 @@ class assign_submission_blog extends assign_submission_plugin {
 
         $result = html_writer::start_tag('div', array('class' => $divclass));
         $result .= get_string($entriescount == 1 ? 'numentry' : 'numentries', 'assignsubmission_blog', $entriescount);
-        $result .= html_writer::start_tag('br');
+        $result .= html_writer::empty_tag('br');
         $result .= get_string($commentscount == 1 ? 'numcomment' : 'numcomments', 'assignsubmission_blog', $commentscount);
         $result .= html_writer::end_tag('div');
 
@@ -236,12 +236,14 @@ class assign_submission_blog extends assign_submission_plugin {
                 'id' => $submission->userid
             ), 'id, username, firstname, lastname', MUST_EXIST);
 
-            $finaltext = '<html>';
-            $finaltext .= '    <head>';
-            $finaltext .= '        <title>Blog entries by '.fullname($user).' on '.$this->assignment->get_instance()->name.'</title>';
-            $finaltext .= '        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
-            $finaltext .= '   </head>';
-            $finaltext .= '   <body>';
+            $finaltext  = html_writer::start_tag('html');
+            $finaltext .= html_writer::start_tag('head');
+            $finaltext .= html_writer::start_tag('title');
+            $finaltext .= 'Blog entries by '.fullname($user).' on '.$this->assignment->get_instance()->name;
+            $finaltext .= html_writer::end_tag('title');
+            $finaltext .= html_writer::empty_tag('meta', array('http-equiv' => 'Content-Type', 'content' => 'text/html; charset=utf-8'));
+            $finaltext .= html_writer::end_tag('head');
+            $finaltext .= html_writer::start_tag('body');
 
             foreach ($entries as $entryid) {
                 $entry = new blog_entry($entryid->id);
@@ -251,8 +253,8 @@ class assign_submission_blog extends assign_submission_plugin {
                 ob_end_clean();
             }
 
-            $finaltext .= '    </body>';
-            $finaltext .= '</html>';
+            $finaltext .= html_writer::end_tag('body');
+            $finaltext .= html_writer::end_tag('html');
             $files[get_string('blogfilename', 'assignsubmission_blog')] = array($finaltext);
         }
 
