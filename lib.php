@@ -21,7 +21,7 @@ function entry_is_relevant($entry) {
         return false;
     }
 
-    $context = get_context_instance_by_id($entry->modassoc);
+    $context = context::instance_by_id($entry->modassoc);
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
