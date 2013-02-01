@@ -200,7 +200,7 @@ class assign_submission_blog extends assign_submission_plugin {
                          'WHERE p.id IN (SELECT itemid FROM {comments} c WHERE userid = ? AND c.itemid = p.id '.
                          'AND c.commentarea = "format_blog") AND ba.contextid = ?';
 
-        if ($this->assignment->get_instance()->preventlatesubmissions) {
+        if (!empty($this->assignment->get_instance()->preventlatesubmissions)) {
             $daterestriction = ' AND p.created BETWEEN '.$this->assignment->get_instance()->allowsubmissionsfromdate.
                                ' AND '.$this->assignment->get_instance()->duedate;
             $entriesquery  .= $daterestriction;
