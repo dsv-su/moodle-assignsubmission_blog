@@ -224,7 +224,7 @@ class assign_submission_blog extends assign_submission_plugin {
      * @param stdClass $submission
      * @return array an array of files indexed by filename
      */
-    public function get_files(stdClass $submission) {
+    public function get_files(stdClass $submission, stdClass $user) {
         global $DB, $CFG;
         require_once('../../blog/locallib.php');
 
@@ -270,5 +270,17 @@ class assign_submission_blog extends assign_submission_plugin {
     public function is_empty(stdClass $submission) {
         list($entriescount, $commentedentriescount) = $this->get_entries_and_comments($submission->userid, true);
         return $entriescount + $commentedentriescount == 0;
+    }
+
+    /**
+     * If blind marking is enabled then disable this plugin (it shows names)
+     *
+     * @return bool
+     */
+    public function is_enabled() {
+        if ($this->assignment->has_instance() && $this->assignment->is_blind_marking()) {
+            return false;
+        }
+        return parent::is_enabled();
     }
 }
