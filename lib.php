@@ -90,32 +90,40 @@ function user_have_registred_submission($userid, $assignment_instance) {
  * @return bool True to indicate that the event was handled successfully.
  */
 function entry_added_handler($entry) {
-    global $CFG, $USER, $DB;
+    global $CFG, $DB, $OUTPUT, $USER;
 
     if (($cm = entry_is_relevant($entry))) {
-        $assignmentinstance = $DB->get_record('assign', array(
-            'id' => $cm->instance
-        ));
+        require_once($CFG->dirroot.'/mod/assign/locallib.php');
+        $existingsubmission = user_have_registred_submission($entry->userid, $cm->instance);
+        $assign = new assign(context::instance_by_id($entry->modassoc), $cm, null);
 
-        $withinassignmentlimits = time() >= $assignmentinstance->allowsubmissionsfromdate && time() <= $assignmentinstance->duedate;
-
-        if (!$assignmentinstance->preventlatesubmissions || $withinassignmentlimits) {
-            // Since assign::get_user_submission is private, we need to replicate it's functionality
-            if (($existingsubmission = user_have_registred_submission($entry->userid, $cm->instance))) {
-                $existingsubmission->timemodified = time();
-                $DB->update_record('assign_submission', $existingsubmission);
-                add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
-                        'Assignment blog submission: Submission updated', $cm->id, $entry->userid);
+        if ($assign->submissions_open($entry->userid)) {
+            // The following two if-statements are stolen from the assignment class.
+            if ($assign->get_instance()->teamsubmission) {
+                $submission = $assign->get_group_submission($USER->id, 0, true);
             } else {
-                $newsubmission = new stdClass();
-                $newsubmission->assignment = $cm->instance;
-                $newsubmission->userid = $entry->userid;
-                $newsubmission->timecreated = time();
-                $newsubmission->timemodified = $newsubmission->timecreated;
-                $newsubmission->status = 'submitted';
-                $DB->insert_record('assign_submission', $newsubmission);
+                $submission = $assign->get_user_submission($USER->id, true);
+            }
+            if ($assign->get_instance()->submissiondrafts) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+            } else {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            }
+
+            $grade = $assign->get_user_grade($USER->id, false); // get the grade to check if it is locked
+            if ($grade && $grade->locked) {
+                echo $OUTPUT->notification(get_string('submissionslocked', 'assign'));
+                return true;
+            }
+
+            if ($existingsubmission) {
+                $submission->timemodified = time();
+                $DB->update_record('assign_submission', $submission);
                 add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id, 
                         'Assignment blog submission: Associated blog entry submitted to assignment', $cm->id, $entry->userid);
+            } else {
+                add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
+                        'Assignment blog submission: Submission updated', $cm->id, $entry->userid);
             }
         }
     }

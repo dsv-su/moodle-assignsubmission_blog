@@ -110,7 +110,7 @@ class assign_submission_blog extends assign_submission_plugin {
      * @return string
      */
     public function view(stdClass $submission) {
-        global $CFG, $DB, $OUTPUT;
+        global $CFG, $DB, $OUTPUT, $PAGE;
 
         require_once('../../blog/locallib.php');
         require_once('../../comment/lib.php');
@@ -120,21 +120,25 @@ class assign_submission_blog extends assign_submission_plugin {
         
         list($entries, $comments) = $this->get_entries_and_comments($submission->userid);
         
-        ob_start();
-        echo $OUTPUT->heading(get_string('blogentries', 'blog'), 2);
+        $output = $PAGE->get_renderer('blog');
+
+        $result = '';
+        $result .= $OUTPUT->heading(get_string('blogentries', 'blog'), 2);
         foreach ($entries as $entry) {
             $blogentry = new blog_entry($entry->id);
-            $blogentry->print_html();
+            $blogentry->prepare_render();
+            $result .= $output->render($blogentry);
         }
 
         if (count($comments) > 0) {
-            echo $OUTPUT->heading(get_string('comments'), 2);
+            $result .= $OUTPUT->heading(get_string('comments'), 2);
             foreach ($comments as $entry) {
                 $blogentry = new blog_entry($entry->id);
-                $blogentry->print_html();
+                $blogentry->prepare_render();
+                $result .= $output->render($blogentry);
             }
         }
-        return ob_get_clean();
+        return $result;
     }
 
     /**
