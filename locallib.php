@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Library class for the blog submission plugin.
  *
@@ -85,7 +100,7 @@ class assign_submission_blog extends assign_submission_plugin {
 
         list($entriescount, $commentscount) = $this->get_entries_and_comments($submission->userid, true);
 
-        $studentmeetsrequirements = $entriescount >= $this->get_config('required_entries') 
+        $studentmeetsrequirements = $entriescount >= $this->get_config('required_entries')
                 && $commentscount >= $this->get_config('required_comments');
 
         if ($studentmeetsrequirements) {
@@ -117,9 +132,9 @@ class assign_submission_blog extends assign_submission_plugin {
 
         // This line prepares the comment subsystem. For example it adds a couple of language strings to js.
         comment::init();
-        
+
         list($entries, $comments) = $this->get_entries_and_comments($submission->userid);
-        
+
         $output = $PAGE->get_renderer('blog');
 
         $result = '';
@@ -245,7 +260,10 @@ class assign_submission_blog extends assign_submission_plugin {
             $finaltext .= html_writer::start_tag('title');
             $finaltext .= 'Blog entries by '.fullname($user).' on '.$this->assignment->get_instance()->name;
             $finaltext .= html_writer::end_tag('title');
-            $finaltext .= html_writer::empty_tag('meta', array('http-equiv' => 'Content-Type', 'content' => 'text/html; charset=utf-8'));
+            $finaltext .= html_writer::empty_tag('meta', array(
+                'http-equiv' => 'Content-Type',
+                'content' => 'text/html; charset=utf-8'
+            ));
             $finaltext .= html_writer::end_tag('head');
             $finaltext .= html_writer::start_tag('body');
 
@@ -264,7 +282,7 @@ class assign_submission_blog extends assign_submission_plugin {
 
         return $files;
     }
-    
+
     /**
      * Are there any associated entries for this submission?
      *

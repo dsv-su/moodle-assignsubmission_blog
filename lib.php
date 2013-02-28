@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * This file contains the event hooks for the submission blog plugin.
  *
@@ -59,7 +74,7 @@ function blogsubmission_is_active($assigninstance) {
             'name' => 'enabled'
     ));
 
-    //This is a workaround for MDL-27629
+    // This is a workaround for MDL-27629.
     return $blogsubmissionactive->value == "1";
 }
 
@@ -110,7 +125,8 @@ function entry_added_handler($entry) {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
             }
 
-            $grade = $assign->get_user_grade($USER->id, false); // get the grade to check if it is locked
+            // Get the grade to check if it is locked.
+            $grade = $assign->get_user_grade($USER->id, false);
             if ($grade && $grade->locked) {
                 echo $OUTPUT->notification(get_string('submissionslocked', 'assign'));
                 return true;
@@ -119,7 +135,7 @@ function entry_added_handler($entry) {
             if ($existingsubmission) {
                 $submission->timemodified = time();
                 $DB->update_record('assign_submission', $submission);
-                add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id, 
+                add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id,
                         'Assignment blog submission: Associated blog entry submitted to assignment', $cm->id, $entry->userid);
             } else {
                 add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
