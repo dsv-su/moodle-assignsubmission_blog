@@ -111,7 +111,6 @@ function entry_added_handler($entry) {
         require_once($CFG->dirroot.'/mod/assign/locallib.php');
         $existingsubmission = user_have_registred_submission($entry->userid, $cm->instance);
         $assign = new assign(context::instance_by_id($entry->modassoc), $cm, null);
-
         if ($assign->submissions_open($entry->userid)) {
             // The following two if-statements are stolen from the assignment class.
             if ($assign->get_instance()->teamsubmission) {
