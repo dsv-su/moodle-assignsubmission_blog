@@ -58,7 +58,7 @@ class assign_submission_blog extends assign_submission_plugin {
                 get_string('requiredentries', 'assignsubmission_blog'), $entriesoptions);
         $mform->setDefault('assignsubmission_blog_requiredentries', $defaultrequiredentries);
         $mform->addHelpButton('assignsubmission_blog_requiredentries', 'requiredentries', 'assignsubmission_blog');
-        $mform->disabledIf('assignsubmission_blog_requiredentries', 'assignsubmission_blog_enabled', 'eq', 0);
+        $mform->disabledIf('assignsubmission_blog_requiredentries', 'assignsubmission_blog_enabled', 'notchecked');
 
         $commentsoptions = array();
         for ($i = 0; $i <= ASSIGNSUBMISSION_BLOG_MAXCOMMENTS; $i++) {
@@ -69,7 +69,7 @@ class assign_submission_blog extends assign_submission_plugin {
                 get_string('requiredcomments', 'assignsubmission_blog'), $commentsoptions);
         $mform->setDefault('assignsubmission_blog_requiredcomments', $defaultrequiredcomments);
         $mform->addHelpButton('assignsubmission_blog_requiredcomments', 'requiredcomments', 'assignsubmission_blog');
-        $mform->disabledIf('assignsubmission_blog_requiredcomments', 'assignsubmission_blog_enabled', 'eq', 0);
+        $mform->disabledIf('assignsubmission_blog_requiredcomments', 'assignsubmission_blog_enabled', 'notchecked');
     }
 
     /**
