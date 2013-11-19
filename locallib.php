@@ -181,6 +181,9 @@ class assign_submission_blog extends assign_submission_plugin {
             $activesubmissionplugincount = 0;
             foreach ($this->assignment->get_submission_plugins() as $plugin) {
                 if ($plugin->is_enabled()) {
+                    if ($plugin->get_type() == 'comments') {
+                        continue;
+                    } 
                     $activesubmissionplugincount++;
                 }
             }
