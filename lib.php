@@ -137,6 +137,7 @@ function entry_added_handler($entry) {
                 add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id,
                         'Assignment blog submission: Associated blog entry submitted to assignment', $cm->id, $entry->userid);
             } else {
+                $DB->update_record('assign_submission', $submission);
                 add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
                         'Assignment blog submission: Submission updated', $cm->id, $entry->userid);
             }
