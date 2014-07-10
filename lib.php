@@ -23,6 +23,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+require_once($CFG->libdir.'/eventslib.php');
+
 /**
  * Determines if this entry is relevant for the blog submission type.
  *
@@ -86,9 +88,9 @@ function blogsubmission_is_active($assigninstance) {
  * @return mixed False if no submission, else the submission record.
  */
 function user_have_registred_submission($userid, $assignment_instance) {
-     global $DB;
+    global $DB;
 
-     $submission = $DB->get_record('assign_submission', array(
+    $submission = $DB->get_record('assign_submission', array(
         'assignment' => $assignment_instance,
         'userid' => $userid
     ));
@@ -112,9 +114,18 @@ function entry_added_handler($entry) {
         $existingsubmission = user_have_registred_submission($entry->userid, $cm->instance);
         $assign = new assign(context::instance_by_id($entry->modassoc), $cm, null);
         if ($assign->submissions_open($entry->userid)) {
+
+            $params = array(
+                'context' => context_module::instance($assign->get_course_module()->id),
+                'courseid' => $assign->get_course()->id
+            );
+
             // The following two if-statements are stolen from the assignment class.
             if ($assign->get_instance()->teamsubmission) {
                 $submission = $assign->get_group_submission($USER->id, 0, true);
+                $existingsubmission = $submission;
+                $params['other']['groupid'] = $assign->get_submission_group($USER->id)->id;
+                $params['other']['groupname'] = $assign->get_submission_group($USER->id)->name;
             } else {
                 $submission = $assign->get_user_submission($USER->id, true);
             }
@@ -123,6 +134,10 @@ function entry_added_handler($entry) {
             } else {
                 $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
             }
+
+            $params['other']['submissionid'] = $submission->id;
+            $params['other']['submissionattempt'] = $submission->attemptnumber;
+            $params['other']['submissionstatus'] = $submission->status;
 
             // Get the grade to check if it is locked.
             $grade = $assign->get_user_grade($USER->id, false);
@@ -134,12 +149,18 @@ function entry_added_handler($entry) {
             if ($existingsubmission) {
                 $submission->timemodified = time();
                 $DB->update_record('assign_submission', $submission);
-                add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id,
-                        'Assignment blog submission: Associated blog entry submitted to assignment', $cm->id, $entry->userid);
+                $event = \assignsubmission_blog\event\submission_updated::create($params);
+                $event->set_assign($assign);
+                $event->trigger();
+                //add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
+                //        'Assignment blog submission: Submission updated', $cm->id, $entry->userid);
             } else {
                 $DB->update_record('assign_submission', $submission);
-                add_to_log($cm->course, 'assign', 'update', 'view.php?id='.$cm->id,
-                        'Assignment blog submission: Submission updated', $cm->id, $entry->userid);
+                $event = \assignsubmission_blog\event\submission_created::create($params);
+                $event->set_assign($assign);
+                $event->trigger();
+                //add_to_log($cm->course, 'assign', 'submit', 'view.php?id='.$cm->id,
+                //        'Assignment blog submission: Associated blog entry submitted to assignment', $cm->id, $entry->userid);
             }
         }
     }
