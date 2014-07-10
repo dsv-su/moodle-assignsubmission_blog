@@ -25,6 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2012062801;
-$plugin->requires  = 2012061700;
+$plugin->version   = 2013111800;
+$plugin->requires  = 2013051400;
 $plugin->component = 'assignsubmission_blog';
