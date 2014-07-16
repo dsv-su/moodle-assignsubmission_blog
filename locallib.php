@@ -303,6 +303,13 @@ class assign_submission_blog extends assign_submission_plugin {
      * @return bool
      */
     public function is_enabled() {
+        // Ensure that capabilities are added: associatemodule for this assignment, associatecourse for this course
+        $roles = get_roles_used_in_context($this->assignment->get_course_context());
+        foreach ($roles as $id => $role) {
+            assign_capability('moodle/blog:associatemodule', 1, $id, $this->assignment->get_context()->id);
+            assign_capability('moodle/blog:associatecourse', 1, $id, $this->assignment->get_course_context()->id);
+        }
+
         if ($this->assignment->has_instance() && $this->assignment->is_blind_marking()) {
             return false;
         }
