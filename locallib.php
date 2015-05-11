@@ -175,7 +175,6 @@ class assign_submission_blog extends assign_submission_plugin {
         $addnewentryurl = $CFG->wwwroot.'/blog/edit.php?action=add&modid='.$this->assignment->get_course_module()->id;
 
         if (isset($submission->status) && $submission->status <> 'new') {
-            var_dump('expression');
             $mform->addElement('html', html_writer::tag('a', get_string('addnewentry', 'blog'), array(
                 'href' => $addnewentryurl
             )));
