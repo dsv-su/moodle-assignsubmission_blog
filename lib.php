@@ -23,7 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once($CFG->libdir.'/eventslib.php');
+require_once($CFG->libdir.'/deprecatedlib.php');
 
 /**
  * Determines if this entry is relevant for the blog submission type.
